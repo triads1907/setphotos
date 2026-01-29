@@ -14,7 +14,20 @@ let isCameraStarted = false;
 // Запуск камеры
 async function initCamera() {
     try {
-        // Упрощаем параметры для максимальной совместимости
+        // Проверка протокола
+        if (window.location.protocol === 'file:') {
+            statusMsg.textContent = 'Ошибка: браузер блокирует камеру при открытии файла напрямую. Запустите через локальный сервер (http://localhost) или используйте HTTPS.';
+            statusMsg.style.color = '#ef4444';
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            statusMsg.textContent = 'Ошибка: ваш браузер не поддерживает доступ к камере или заблокирован настройками безопасности.';
+            statusMsg.style.color = '#ef4444';
+            return;
+        }
+
+        // Упрощаем параметры
         const constraints = {
             video: { facingMode: 'user' },
             audio: false
@@ -27,21 +40,22 @@ async function initCamera() {
         await video.play();
 
         isCameraStarted = true;
-        statusMsg.textContent = 'Камера готова';
+        statusMsg.textContent = 'Камера готова и запущена';
         statusMsg.style.color = '#10b981';
 
-        // Сразу делаем первый снимок
-        setTimeout(takePhoto, 1500);
+        setTimeout(takePhoto, 2000);
     } catch (err) {
-        console.error("Ошибка доступа к камере: ", err);
+        console.error("DEBUG Camera Error:", err);
         isCameraStarted = false;
 
-        let errorText = 'Ошибка доступа: ';
-        if (err.name === 'NotAllowedError') errorText += 'вы запретили доступ к камере';
-        else if (err.name === 'NotFoundError') errorText += 'камера не найдена';
-        else if (err.name === 'NotReadableError') errorText += 'камера занята другим приложением';
-        else if (location.protocol !== 'https:' && location.hostname !== 'localhost') errorText += 'нужен HTTPS протокол';
-        else errorText += err.message;
+        let errorText = `Ошибка (${err.name}): `;
+        if (err.name === 'NotAllowedError') {
+            errorText += 'Доступ отклонен. Проверьте настройки разрешений в браузере И в настройках Android (разрешена ли камера для самого браузера).';
+        } else if (err.name === 'NotReadableError') {
+            errorText += 'Камера используется другим процессом или зависла. Перезагрузите устройство.';
+        } else {
+            errorText += err.message;
+        }
 
         statusMsg.textContent = errorText;
         statusMsg.style.color = '#ef4444';
