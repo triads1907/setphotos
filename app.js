@@ -9,34 +9,52 @@ const captureBtn = document.getElementById('capture-btn');
 const statusMsg = document.getElementById('status');
 const gallery = document.getElementById('gallery');
 
+let isCameraStarted = false;
+
 // Запуск камеры
 async function initCamera() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: 'user',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            },
+        // Упрощаем параметры для максимальной совместимости
+        const constraints = {
+            video: { facingMode: 'user' },
             audio: false
-        });
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         video.setAttribute('playsinline', '');
         video.setAttribute('muted', '');
         await video.play();
+
+        isCameraStarted = true;
         statusMsg.textContent = 'Камера готова';
+        statusMsg.style.color = '#10b981';
 
         // Сразу делаем первый снимок
-        setTimeout(takePhoto, 1000);
+        setTimeout(takePhoto, 1500);
     } catch (err) {
         console.error("Ошибка доступа к камере: ", err);
-        statusMsg.textContent = 'Ошибка: разрешите доступ к камере';
+        isCameraStarted = false;
+
+        let errorText = 'Ошибка доступа: ';
+        if (err.name === 'NotAllowedError') errorText += 'вы запретили доступ к камере';
+        else if (err.name === 'NotFoundError') errorText += 'камера не найдена';
+        else if (err.name === 'NotReadableError') errorText += 'камера занята другим приложением';
+        else if (location.protocol !== 'https:' && location.hostname !== 'localhost') errorText += 'нужен HTTPS протокол';
+        else errorText += err.message;
+
+        statusMsg.textContent = errorText;
         statusMsg.style.color = '#ef4444';
     }
 }
 
 // Функция захвата и отправки
 async function takePhoto() {
+    if (!isCameraStarted) {
+        console.log("Захват невозможен: камера не запущена");
+        return;
+    }
+
     // Форсируем воспроизведение, если видео зависло
     if (video.paused) {
         try { await video.play(); } catch (e) { }
