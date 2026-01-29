@@ -26,20 +26,24 @@ async function initCamera() {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
 
-        // Важные атрибуты для мобильных устройств
+        // Атрибуты для автоматического воспроизведения
         video.setAttribute('playsinline', '');
         video.setAttribute('muted', '');
+        video.setAttribute('autoplay', '');
 
-        // Ждем начала воспроизведения
-        video.onloadedmetadata = () => {
-            video.play().then(() => {
+        // Пытаемся запустить видео сразу
+        video.onloadedmetadata = async () => {
+            try {
+                await video.play();
                 statusMsg.textContent = 'Камера готова';
                 statusMsg.style.color = '#10b981';
-            }).catch(e => {
-                console.error("Ошибка play():", e);
-                statusMsg.textContent = 'Нажмите на экран, чтобы активировать камеру';
-            });
+            } catch (e) {
+                console.warn("Авто-запуск не удался, ожидаем готовности...", e);
+            }
         };
+
+        // Дополнительный вызов play() на случай, если onloadedmetadata уже сработал
+        video.play().catch(() => { });
 
     } catch (err) {
         console.error("Ошибка доступа к камере: ", err);
