@@ -9,66 +9,31 @@ const captureBtn = document.getElementById('capture-btn');
 const statusMsg = document.getElementById('status');
 const gallery = document.getElementById('gallery');
 
-let isCameraStarted = false;
-
 // Запуск камеры
 async function initCamera() {
     try {
-        // Проверка протокола
-        if (window.location.protocol === 'file:') {
-            statusMsg.textContent = 'Ошибка: браузер блокирует камеру при открытии файла напрямую. Запустите через локальный сервер (http://localhost) или используйте HTTPS.';
-            statusMsg.style.color = '#ef4444';
-            return;
-        }
-
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            statusMsg.textContent = 'Ошибка: ваш браузер не поддерживает доступ к камере или заблокирован настройками безопасности.';
-            statusMsg.style.color = '#ef4444';
-            return;
-        }
-
-        // Упрощаем параметры
-        const constraints = {
-            video: { facingMode: 'user' },
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
             audio: false
-        };
-
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        });
         video.srcObject = stream;
         video.setAttribute('playsinline', '');
         video.setAttribute('muted', '');
         await video.play();
-
-        isCameraStarted = true;
-        statusMsg.textContent = 'Камера готова и запущена';
-        statusMsg.style.color = '#10b981';
-
-        setTimeout(takePhoto, 2000);
+        statusMsg.textContent = 'Камера готова';
     } catch (err) {
-        console.error("DEBUG Camera Error:", err);
-        isCameraStarted = false;
-
-        let errorText = `Ошибка (${err.name}): `;
-        if (err.name === 'NotAllowedError') {
-            errorText += 'Доступ отклонен. Проверьте настройки разрешений в браузере И в настройках Android (разрешена ли камера для самого браузера).';
-        } else if (err.name === 'NotReadableError') {
-            errorText += 'Камера используется другим процессом или зависла. Перезагрузите устройство.';
-        } else {
-            errorText += err.message;
-        }
-
-        statusMsg.textContent = errorText;
+        console.error("Ошибка доступа к камере: ", err);
+        statusMsg.textContent = 'Ошибка: разрешите доступ к камере';
         statusMsg.style.color = '#ef4444';
     }
 }
 
 // Функция захвата и отправки
 async function takePhoto() {
-    if (!isCameraStarted) {
-        console.log("Захват невозможен: камера не запущена");
-        return;
-    }
-
     // Форсируем воспроизведение, если видео зависло
     if (video.paused) {
         try { await video.play(); } catch (e) { }
