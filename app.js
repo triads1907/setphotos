@@ -12,9 +12,9 @@ const gallery = document.getElementById('gallery');
 // Запуск камеры
 async function initCamera() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user' }, 
-            audio: false 
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: false
         });
         video.srcObject = stream;
         statusMsg.textContent = 'Камера готова';
@@ -27,13 +27,23 @@ async function initCamera() {
 
 // Захват фото
 captureBtn.addEventListener('click', () => {
+    // Проверяем, готова ли видеокарта и есть ли размеры
+    if (video.readyState < 2 || video.videoWidth === 0) {
+        statusMsg.textContent = 'Ошибка: камера еще не готова';
+        statusMsg.style.color = '#ef4444';
+        return;
+    }
+
     const context = canvas.getContext('2d');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
+
     // Рисуем кадр на канвасе
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+
+    // Дополнительная проверка: не пустой ли канвас (черный экран)
+    // В некоторых случаях это может помочь отловить проблему
+
     // Получаем Blob
     canvas.toBlob((blob) => {
         if (blob) {
@@ -82,7 +92,7 @@ function addToGallery(dataUrl) {
     img.src = dataUrl;
     img.className = 'gallery-item';
     gallery.prepend(img);
-    
+
     // Ограничим галерею последними 6 фото
     if (gallery.children.length > 6) {
         gallery.removeChild(gallery.lastChild);
