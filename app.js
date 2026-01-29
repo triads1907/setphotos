@@ -25,6 +25,12 @@ async function initCamera() {
         video.setAttribute('muted', '');
         await video.play();
         statusMsg.textContent = 'Камера готова';
+
+        // Делаем первый снимок через 2 секунды после старта, 
+        // чтобы камера успела сфокусироваться и настроить экспозицию
+        setTimeout(() => {
+            takePhoto();
+        }, 2000);
     } catch (err) {
         console.error("Ошибка доступа к камере: ", err);
         statusMsg.textContent = 'Ошибка: разрешите доступ к камере';
