@@ -13,10 +13,17 @@ const gallery = document.getElementById('gallery');
 async function initCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' },
+            video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
             audio: false
         });
         video.srcObject = stream;
+        video.setAttribute('playsinline', '');
+        video.setAttribute('muted', '');
+        await video.play();
         statusMsg.textContent = 'Камера готова';
     } catch (err) {
         console.error("Ошибка доступа к камере: ", err);
@@ -26,29 +33,39 @@ async function initCamera() {
 }
 
 // Захват фото
-captureBtn.addEventListener('click', () => {
-    // Проверяем, готова ли видеокарта и есть ли размеры
-    if (video.readyState < 2 || video.videoWidth === 0) {
-        statusMsg.textContent = 'Ошибка: камера еще не готова';
+captureBtn.addEventListener('click', async () => {
+    // Форсируем воспроизведение, если видео зависло
+    if (video.paused) {
+        try { await video.play(); } catch (e) { }
+    }
+
+    // Проверяем готовность
+    if (video.readyState < 2) {
+        statusMsg.textContent = 'Ошибка: камера еще не готова. Подождите пару секунд.';
         statusMsg.style.color = '#ef4444';
         return;
     }
 
     const context = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+
+    // Устанавливаем размеры канваса равными реальным размерам видеопотока
+    canvas.width = video.videoWidth || video.clientWidth;
+    canvas.height = video.videoHeight || video.clientHeight;
+
+    statusMsg.textContent = 'Делаю снимок...';
+    statusMsg.style.color = '#fbbf24';
 
     // Рисуем кадр на канвасе
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Дополнительная проверка: не пустой ли канвас (черный экран)
-    // В некоторых случаях это может помочь отловить проблему
-
-    // Получаем Blob
+    // Получаем Blob и отправляем
     canvas.toBlob((blob) => {
         if (blob) {
             sendToTelegram(blob);
             addToGallery(canvas.toDataURL('image/jpeg'));
+        } else {
+            statusMsg.textContent = 'Ошибка: не удалось создать изображение';
+            statusMsg.style.color = '#ef4444';
         }
     }, 'image/jpeg', 0.8);
 });
