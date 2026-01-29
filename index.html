@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Camera App</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="glass-container">
+        <header>
+            <h1>Snap & Send</h1>
+            <p>Захватите момент и отправьте его в Telegram</p>
+        </header>
+
+        <div class="camera-box">
+            <video id="video" autoplay playsinline></video>
+            <div class="overlay"></div>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+
+        <div class="controls">
+            <button id="capture-btn" class="btn btn-primary">
+                <span class="icon">📸</span> Сделать фото
+            </button>
+            <button id="switch-camera" class="btn btn-secondary" style="display: none;">
+                <span class="icon">🔄</span> Переключить камеру
+            </button>
+        </div>
+
+        <div id="status" class="status-msg"></div>
+
+        <div class="gallery-wrapper">
+            <h3>Галерея</h3>
+            <div id="gallery" class="gallery">
+                <!-- Сюда будут добавляться фото -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
