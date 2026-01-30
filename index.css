@@ -1,4 +1,3 @@
-
 * {
     margin: 0;
     padding: 0;
@@ -7,7 +6,7 @@
 
 body {
     font-family: 'Outfit', sans-serif;
- 
+
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -18,36 +17,21 @@ body {
 }
 
 .glass-container {
-   
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+
     border-radius: 24px;
     padding: 40px;
     width: 100%;
     max-width: 500px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
     text-align: center;
     animation: fadeIn 0.8s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 header h1 {
     font-size: 2.5rem;
     font-weight: 600;
     margin-bottom: 8px;
-   
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -65,7 +49,7 @@ header p {
     border-radius: 16px;
     overflow: hidden;
     margin-bottom: 24px;
-    border: 2px solid var(--glass-border);
+
 }
 
 video {
@@ -81,7 +65,7 @@ video {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.3);
+
 }
 
 .controls {
@@ -105,25 +89,14 @@ video {
 }
 
 .btn-primary {
- 
+
     color: white;
-}
-
-.btn-primary:hover {
-  
-    transform: scale(1.02);
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
-}
-
-.btn-primary:active {
-    transform: scale(0.98);
 }
 
 .status-msg {
     font-size: 0.9rem;
     height: 20px;
     margin-bottom: 20px;
-    color: #10b981;
 }
 
 .gallery-wrapper {
@@ -147,27 +120,5 @@ video {
     width: 100%;
     aspect-ratio: 1;
     border-radius: 8px;
-    object-fit: cover;
-    border: 1px solid var(--glass-border);
-    animation: popIn 0.3s ease-out;
+
 }
-
-@keyframes popIn {
-    0% {
-        transform: scale(0.5);
-        opacity: 0;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-/* Mobile optimizations */
-@media (max-width: 480px) {
-    .glass-container {
-        padding: 20px;
-    }
-}
-
