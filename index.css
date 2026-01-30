@@ -82,6 +82,11 @@ video {
     gap: 8px;
 }
 
+.btn:focus {
+    outline: none;
+    background-color: white;
+}
+
 .btn-primary {
     background: white;
     color: white;
